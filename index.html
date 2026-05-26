@@ -398,6 +398,22 @@ img{max-width:100%}
 .chat-send-btn{width:40px;height:40px;border-radius:var(--r-md);background:var(--primary);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all var(--t-bounce);flex-shrink:0}
 .chat-send-btn:hover{background:var(--primary2);transform:scale(1.05)}
 
+/* ── Chat Context Menu (mobile long-press) ── */
+.chat-ctx-menu{position:fixed;z-index:500;background:rgba(15,15,26,.98);backdrop-filter:blur(20px);border:1px solid var(--glass2);border-radius:var(--r-lg);padding:6px 0;min-width:180px;box-shadow:0 12px 40px rgba(0,0,0,.7);animation:fadeInScale .15s ease}
+.chat-ctx-menu .ctx-item{display:flex;align-items:center;gap:10px;padding:11px 18px;font-size:.875rem;font-weight:500;color:var(--txt);cursor:pointer;transition:background var(--t-fast);border:none;background:none;width:100%;font-family:var(--font);text-align:left}
+.chat-ctx-menu .ctx-item:hover,.chat-ctx-menu .ctx-item:active{background:rgba(99,102,241,.18)}
+.chat-ctx-menu .ctx-item .ctx-icon{font-size:1.1rem;width:24px;text-align:center;flex-shrink:0}
+.chat-ctx-menu .ctx-item.danger{color:var(--red)}
+.chat-ctx-menu .ctx-sep{height:1px;background:var(--border);margin:4px 12px}
+.chat-ctx-reactions{display:flex;gap:2px;padding:8px 12px;border-bottom:1px solid var(--border);justify-content:center}
+.chat-ctx-reactions button{background:none;border:none;font-size:1.3rem;cursor:pointer;padding:4px 6px;border-radius:var(--r-sm);transition:all var(--t-fast)}
+.chat-ctx-reactions button:hover,.chat-ctx-reactions button:active{background:var(--surface2);transform:scale(1.2)}
+.msg-reactions-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.msg-reaction-pill{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:rgba(255,255,255,.08);border:1px solid var(--border);border-radius:var(--r-full);font-size:.75rem;cursor:pointer;transition:all var(--t-fast)}
+.msg-reaction-pill:hover{background:rgba(99,102,241,.2);border-color:var(--primary)}
+.msg-reaction-pill .react-count{font-size:.68rem;color:var(--txt3)}
+.chat-msg.editing .msg-bubble{border:1px dashed var(--primary);background:rgba(99,102,241,.12)!important}
+
 /* Emoji Picker */
 .emoji-picker-wrap{position:relative}
 .emoji-picker{position:absolute;bottom:100%;left:0;right:0;background:rgba(15,15,26,.99);backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:var(--r-md);padding:8px;z-index:200;animation:fadeIn .2s ease}
@@ -441,7 +457,11 @@ img{max-width:100%}
 @media(max-width:480px){
   .controls-bar{gap:6px;padding:8px}
   .ctrl-btn{width:40px;height:40px}
-  .call-duration{display:none}
+  .call-duration{font-size:.72rem;padding:3px 7px}
+  .room-header{padding:0 8px;gap:6px}
+  .room-header .room-logo span{display:none}
+  .room-id-badge{font-size:.72rem;padding:4px 8px}
+  .quality-badge{display:none}
 }
 </style>
 </head>
@@ -1030,18 +1050,61 @@ class WebRTCManager {
   get myId(){ return this.isHost?this.hostId:`em-u-${this.userId}`; }
 
   async initMedia(){
+    const audioConstraints = {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+      channelCount: 1,
+      sampleRate: 48000,
+      sampleSize: 16
+    };
     try{
-      this.localStream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},facingMode:'user'},audio:{echoCancellation:true,noiseSuppression:true}});
+      this.localStream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},facingMode:'user'},audio:audioConstraints});
     }catch(e){
-      try{ Toast.warning('No camera — audio only.'); this.localStream=await navigator.mediaDevices.getUserMedia({audio:true}); }
+      try{ Toast.warning('No camera — audio only.'); this.localStream=await navigator.mediaDevices.getUserMedia({audio:audioConstraints}); }
       catch(e2){ Toast.error('Cannot access mic: '+e2.message); }
+    }
+    // Apply noise gate to reduce background noise
+    if(this.localStream && this.localStream.getAudioTracks().length > 0){
+      try {
+        const actx = new (window.AudioContext || window.webkitAudioContext)();
+        const src = actx.createMediaStreamSource(this.localStream);
+        const dest = actx.createMediaStreamDestination();
+        // High-pass filter to cut low-frequency rumble/hum
+        const hpf = actx.createBiquadFilter();
+        hpf.type = 'highpass';
+        hpf.frequency.value = 85;
+        hpf.Q.value = 0.7;
+        // Low-pass filter to cut high-frequency hiss
+        const lpf = actx.createBiquadFilter();
+        lpf.type = 'lowpass';
+        lpf.frequency.value = 14000;
+        // Compressor to even out volume and suppress background noise
+        const comp = actx.createDynamicsCompressor();
+        comp.threshold.value = -50;
+        comp.knee.value = 40;
+        comp.ratio.value = 12;
+        comp.attack.value = 0;
+        comp.release.value = 0.25;
+        src.connect(hpf);
+        hpf.connect(lpf);
+        lpf.connect(comp);
+        comp.connect(dest);
+        // Replace audio track with processed one
+        const processedTrack = dest.stream.getAudioTracks()[0];
+        const oldTrack = this.localStream.getAudioTracks()[0];
+        this.localStream.removeTrack(oldTrack);
+        this.localStream.addTrack(processedTrack);
+        this._audioCtx = actx;
+        this._origAudioTrack = oldTrack;
+      } catch(nErr) { console.warn('Audio processing unavailable:', nErr); }
     }
     return this.localStream;
   }
 
   async init(){
     return new Promise((res,rej)=>{
-      this.peer=new Peer(this.myId,{config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]},debug:0});
+      this.peer=new Peer(this.myId,{config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:stun2.l.google.com:19302'},{urls:'stun:stun3.l.google.com:19302'}]},debug:0});
       const t=setTimeout(()=>rej(new Error('Signaling server timeout.')),15000);
       this.peer.on('open',id=>{ clearTimeout(t);
         this.peer.on('call',call=>{ call.answer(this.localStream||undefined);
@@ -1058,7 +1121,7 @@ class WebRTCManager {
   async joinHost(){
     return new Promise((res,rej)=>{
       const t=setTimeout(()=>rej(new Error('Room not found — make sure the host is connected.')),12000);
-      const dc=this.peer.connect(this.hostId,{metadata:{name:this.userName},reliable:true,serialization:'raw'});
+      const dc=this.peer.connect(this.hostId,{metadata:{name:this.userName},reliable:true,serialization:'json'});
       dc.on('open',()=>{ clearTimeout(t); this._setupData(dc,'Host',false);
         if(this.localStream){ const call=this.peer.call(this.hostId,this.localStream,{metadata:{name:this.userName}}); call.on('stream',s=>{ this._regCall(this.hostId,call,'Host'); if(this.onStream)this.onStream(this.hostId,s,'Host'); this._speaking(this.hostId,s); }); call.on('close',()=>this._peerGone(this.hostId)); }
         res(this.hostId);
@@ -1069,7 +1132,7 @@ class WebRTCManager {
 
   connectToPeer(pid,pname){
     if(this.conns.has(pid)||pid===this.myId) return;
-    const dc=this.peer.connect(pid,{metadata:{name:this.userName},reliable:true,serialization:'raw'});
+    const dc=this.peer.connect(pid,{metadata:{name:this.userName},reliable:true,serialization:'json'});
     dc.on('open',()=>{ this._setupData(dc,pname,false);
       if(this.localStream){ const call=this.peer.call(pid,this.localStream,{metadata:{name:this.userName}}); call.on('stream',s=>{ this._regCall(pid,call,pname); if(this.onStream)this.onStream(pid,s,pname); this._speaking(pid,s); }); call.on('close',()=>this._peerGone(pid)); }
     });
@@ -1087,7 +1150,7 @@ class WebRTCManager {
         if(this.onPeerJoined)this.onPeerJoined(conn.peer,pname);
       });
     } else if(incoming){ if(this.onPeerJoined)this.onPeerJoined(conn.peer,pname); }
-    conn.on('data',raw=>{ try{ const m=JSON.parse(raw); this._handleMsg(m,conn.peer); }catch{} });
+    conn.on('data',raw=>{ try{ let d=raw; if(d instanceof Blob){const r=new FileReader();r.onload=()=>{try{this._handleMsg(JSON.parse(r.result),conn.peer)}catch{}};r.readAsText(d);return;} if(d instanceof ArrayBuffer)d=new TextDecoder().decode(d); if(typeof d==='string')d=JSON.parse(d); this._handleMsg(d,conn.peer); }catch{} });
     conn.on('close',()=>this._peerGone(conn.peer));
     conn.on('error',()=>this._peerGone(conn.peer));
   }
@@ -1105,7 +1168,7 @@ class WebRTCManager {
 
   _broadcastExcept(excl,m){ this.conns.forEach((c,id)=>{ if(id!==excl)this._send(c.data,m); }); }
   broadcast(m){ this.conns.forEach(c=>this._send(c.data,m)); }
-  _send(conn,m){ if(conn&&conn.open!==false)try{conn.send(JSON.stringify(m))}catch{} }
+  _send(conn,m){ if(conn&&conn.open!==false)try{conn.send(m)}catch{} }
   sendData(type,data){ this.broadcast({type,data}); }
 
   _speaking(pid,stream){
@@ -1127,7 +1190,13 @@ class WebRTCManager {
 
   async changeDevice(kind,deviceId){ const c=kind==='audioinput'?{audio:{deviceId:{exact:deviceId}}}:{video:{deviceId:{exact:deviceId}}}; try{ const s=await navigator.mediaDevices.getUserMedia(c); const[nt]=s.getTracks(); this.conns.forEach(c=>{ const pc=c.call?.peerConnection; if(!pc)return; const send=pc.getSenders().find(s=>s.track?.kind===nt.kind); if(send)send.replaceTrack(nt); }); const old=this.localStream?.getTracks().find(t=>t.kind===nt.kind); if(old){this.localStream.removeTrack(old);old.stop();} this.localStream?.addTrack(nt); Toast.success('Device switched!'); }catch(e){Toast.error('Switch failed: '+e.message);} }
 
-  destroy(){ this.localStream?.getTracks().forEach(t=>t.stop()); this.screenStream?.getTracks().forEach(t=>t.stop()); if(this.isRecording)this.stopRecording(); this.conns.forEach((_,id)=>this._peerGone(id)); this.peer?.destroy(); }
+  async applyAudioConstraints(opts){
+    const tracks = this.localStream?.getAudioTracks();
+    if(!tracks?.length) return;
+    try { await tracks[0].applyConstraints({ noiseSuppression: opts.noiseSuppression, echoCancellation: opts.echoCancellation, autoGainControl: true }); } catch(e){ console.warn('Could not apply audio constraints:', e); }
+  }
+
+  destroy(){ this._origAudioTrack?.stop(); try{this._audioCtx?.close()}catch{}; this.localStream?.getTracks().forEach(t=>t.stop()); this.screenStream?.getTracks().forEach(t=>t.stop()); if(this.isRecording)this.stopRecording(); this.conns.forEach((_,id)=>this._peerGone(id)); this.peer?.destroy(); }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1144,7 +1213,7 @@ const REACTIONS = ['👍','❤️','😂','😮','😢','😡','🔥','🎉','�
 class ChatManager {
   constructor({localUserId,localUserName,onNewMessage}){ Object.assign(this,{localUserId,localUserName,onNewMessage}); this.msgs=[]; this.typers=new Map(); this.inFiles=new Map(); this.msgsEl=null; this.typingEl=null; }
   init(msgsEl,typingEl){ this.msgsEl=msgsEl; this.typingEl=typingEl; }
-  sendText(text,webrtc){ if(!text?.trim())return; const m=this._mk('text',{text:text.trim()}); this._render(m,true); webrtc.broadcast({type:'chat',...m}); }
+  sendText(text,webrtc){ if(!text?.trim())return; const m=this._mk('text',{text:text.trim()}); this._render(m,true); webrtc.broadcast({...m, msgType:m.type, type:'chat'}); }
   sendSystem(text){ this._sys(text); }
   async sendFile(file,webrtc,onProgress){
     if(file.size>20*1024*1024){Toast.error('Max file size: 20 MB');return;}
@@ -1154,7 +1223,7 @@ class ChatManager {
       const mtype=file.type.startsWith('image/')?'image':file.type.startsWith('audio/')?'audio':'file';
       if(file.size<400*1024){
         const m=this._mk(mtype,{fileName:file.name,fileSize:file.size,fileData:data});
-        this._render(m,true); webrtc.broadcast({type:'chat',...m}); if(onProgress)onProgress(100);
+        this._render(m,true); webrtc.broadcast({...m, msgType:m.type, type:'chat'}); if(onProgress)onProgress(100);
       } else {
         const SZ=16384,id=`f${Date.now()}`,tot=Math.ceil(data.length/SZ);
         webrtc.broadcast({type:'file-start',id,name:file.name,size:file.size,msgType:mtype,total:tot});
@@ -1164,7 +1233,7 @@ class ChatManager {
     };
     reader.readAsDataURL(file);
   }
-  receive(m,from){ if(this.msgs.find(x=>x.id===m.id))return; this.msgs.push(m); this._render(m,false); if(this.onNewMessage)this.onNewMessage(m); }
+  receive(m,from){ if(this.msgs.find(x=>x.id===m.id))return; if(m.msgType)m.type=m.msgType; this.msgs.push(m); this._render(m,false); if(this.onNewMessage)this.onNewMessage(m); }
   handleFileStart(d){ this.inFiles.set(d.id,{name:d.name,size:d.size,msgType:d.msgType,total:d.total,chunks:new Array(d.total),got:0}); }
   handleFileChunk(d){ const f=this.inFiles.get(d.id); if(f){f.chunks[d.index]=d.chunk;f.got++;} }
   handleFileEnd(d){ const f=this.inFiles.get(d.id); if(!f)return; const data=f.chunks.join(''); const m=this._mk(f.msgType,{fileName:f.name,fileSize:f.size,fileData:data}); this._render(m,false); if(this.onNewMessage)this.onNewMessage(m); this.inFiles.delete(d.id); }
@@ -1175,17 +1244,22 @@ class ChatManager {
   _mk(type,extra={}){ const m={id:`m${Date.now()}${Math.random().toString(36).slice(2,5)}`,senderId:this.localUserId,senderName:this.localUserName,type,timestamp:Date.now(),...extra}; this.msgs.push(m); return m; }
   _render(m,isOwn){
     if(!this.msgsEl)return;
-    const el=document.createElement('div'); el.className=`chat-msg${isOwn?' own':''}`; el.dataset.id=m.id;
+    const el=document.createElement('div'); el.className=`chat-msg${isOwn?' own':''}`; el.dataset.id=m.id; el.dataset.senderId=m.senderId; el.dataset.type=m.type;
     const init=getInitials(m.senderName||'U'),time=formatTime(m.timestamp),col=getUserColor(m.senderId);
     let bubble='';
     if(m.type==='text') bubble=`<div class="msg-bubble">${this._fmt(m.text||'')}</div>`;
     else if(m.type==='image') bubble=`<div class="msg-bubble msg-image"><img src="${m.fileData}" alt="${esc(m.fileName)}" loading="lazy" onclick="window.open(this.src,'_blank')"></div>`;
     else if(m.type==='audio') bubble=`<div class="msg-bubble msg-audio"><span>🎤</span><audio controls src="${m.fileData}" preload="none"></audio></div>`;
     else if(m.type==='file'){ const ext=(m.fileName||'').split('.').pop().toUpperCase(); bubble=`<div class="msg-bubble msg-file"><span class="msg-file-icon">${this._ficon(ext)}</span><div class="msg-file-info"><div class="msg-file-name">${esc(m.fileName)}</div><div class="msg-file-size">${formatSize(m.fileSize||0)}</div></div><a href="${m.fileData}" download="${esc(m.fileName)}" class="msg-file-dl">⬇️</a></div>`; }
+    bubble += `<div class="msg-reactions-row" data-mid="${m.id}"></div>`;
     el.innerHTML=`<div class="msg-avatar" style="background:${col}">${init}</div><div class="msg-body"><div class="msg-meta"><span class="msg-name">${esc(m.senderName)}</span><span class="msg-time">${time}</span></div>${bubble}</div>`;
     this.msgsEl.appendChild(el);
     requestAnimationFrame(()=>this.msgsEl.scrollTop=this.msgsEl.scrollHeight);
   }
+  deleteMsg(id){ const el=this.msgsEl?.querySelector(`[data-id="${id}"]`); if(el)el.remove(); this.msgs=this.msgs.filter(m=>m.id!==id); }
+  getMsg(id){ return this.msgs.find(m=>m.id===id); }
+  editMsg(id,newText){ const m=this.msgs.find(x=>x.id===id); if(!m||m.type!=='text')return; m.text=newText; const el=this.msgsEl?.querySelector(`[data-id="${id}"]`); if(el){ const bub=el.querySelector('.msg-bubble'); if(bub)bub.innerHTML=this._fmt(newText)+' <span style="font-size:.65rem;color:var(--txt3);font-style:italic">(edited)</span>'; } }
+  addReaction(id,emoji){ const row=this.msgsEl?.querySelector(`.msg-reactions-row[data-mid="${id}"]`); if(!row)return; let pill=row.querySelector(`[data-emoji="${emoji}"]`); if(pill){ const cnt=pill.querySelector('.react-count'); cnt.textContent=parseInt(cnt.textContent||'0')+1; } else { pill=document.createElement('span'); pill.className='msg-reaction-pill'; pill.dataset.emoji=emoji; pill.innerHTML=`${emoji} <span class="react-count">1</span>`; pill.onclick=()=>{const c=pill.querySelector('.react-count');c.textContent=parseInt(c.textContent||'0')+1;}; row.appendChild(pill); } }
   _sys(text){ if(!this.msgsEl)return; const el=document.createElement('div'); el.className='system-msg'; el.innerHTML=`<span>${esc(text)}</span>`; this.msgsEl.appendChild(el); this.msgsEl.scrollTop=this.msgsEl.scrollHeight; }
   _fmt(t){ let o=esc(t); o=o.replace(/(https?:\/\/[^\s<>"]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>'); return o.replace(/\n/g,'<br>'); }
   _ficon(ext){ const m={PDF:'📄',DOC:'📝',DOCX:'📝',XLS:'📊',XLSX:'📊',ZIP:'🗜️',MP3:'🎵',MP4:'🎬',MOV:'🎬'}; return m[ext]||'📎'; }
@@ -1273,6 +1347,9 @@ function handleData(m,from){
     case 'screen-share':{ const b=$('screen-banner'); if(b){b.textContent=m.data?.sharing?`🖥️ ${m.data.name} sharing`:'';b.classList.toggle('hidden',!m.data?.sharing);} break; }
     case 'hand-raise':{ const p=peers.get(from); if(p)p.hand=m.data?.raised; renderPeers(); const t=$(`tile-${from}`); t?.querySelector('.tile-hand')?.classList.toggle('hidden',!m.data?.raised); if(m.data?.raised)Toast.info(`✋ ${p?.name||'Someone'} raised hand`); break; }
     case 'reaction': showReaction(m.data?.emoji); break;
+    case 'chat-edit': chat?.editMsg(m.id,m.text); break;
+    case 'chat-delete': chat?.deleteMsg(m.id); break;
+    case 'chat-reaction': chat?.addReaction(m.id,m.emoji); break;
   }
 }
 
@@ -1361,13 +1438,16 @@ function initSidebar(){
 }
 
 // ── Chat ──────────────────────────────────────────────────────
+let _editingMsgId = null;
 function initRoomChat(uid,name){
   chat=new ChatManager({localUserId:uid,localUserName:name,onNewMessage:m=>{if(m.senderId!==uid&&activeTab!=='chat'){unread++;const b=$('chat-badge');if(b){b.textContent=unread>9?'9+':unread;b.classList.remove('hidden');}}}});
   chat.init($('chat-messages'),$('typing-indicator'));
 
-  const sendMsg=()=>{ const inp=$('chat-input'); const txt=inp.value.trim(); if(!txt)return; inp.value=''; chat.sendText(txt,webrtc); chat.sendTyping(webrtc,false); };
+  const sendMsg=()=>{ const inp=$('chat-input'); const txt=inp.value.trim(); if(!txt)return;
+    if(_editingMsgId){ chat.editMsg(_editingMsgId,txt); webrtc.broadcast({type:'chat-edit',id:_editingMsgId,text:txt}); _editingMsgId=null; inp.value=''; inp.placeholder='Type a message…'; const editEl=$('chat-messages').querySelector('.editing'); if(editEl)editEl.classList.remove('editing'); return; }
+    inp.value=''; chat.sendText(txt,webrtc); chat.sendTyping(webrtc,false); };
   $('chat-send').onclick=sendMsg;
-  $('chat-input').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}else{chat.sendTyping(webrtc,true);clearTimeout(window._tt);window._tt=setTimeout(()=>chat.sendTyping(webrtc,false),3000);} });
+  $('chat-input').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}else if(e.key==='Escape'&&_editingMsgId){_editingMsgId=null;$('chat-input').value='';$('chat-input').placeholder='Type a message…';const editEl=$('chat-messages').querySelector('.editing');if(editEl)editEl.classList.remove('editing');}else{chat.sendTyping(webrtc,true);clearTimeout(window._tt);window._tt=setTimeout(()=>chat.sendTyping(webrtc,false),3000);} });
 
   // Emoji
   const ep=$('emoji-picker'); buildEmojiPicker(ep,emoji=>{ const inp=$('chat-input'); const s=inp.selectionStart||inp.value.length; inp.value=inp.value.slice(0,s)+emoji+inp.value.slice(s); inp.focus(); ep.classList.add('hidden'); });
@@ -1384,6 +1464,146 @@ function initRoomChat(uid,name){
   const stopV=async()=>{ if(!vr)return; vr.stop(); vbtn.classList.remove('active'); vr.onstop=async()=>{ const b=new Blob(vc,{type:'audio/webm'}); const f=new File([b],`voice-${Date.now()}.webm`,{type:'audio/webm'}); await chat.sendFile(f,webrtc,()=>{}); vr?.stream?.getTracks().forEach(t=>t.stop()); vr=null; }; };
   vbtn.addEventListener('mousedown',async()=>{ try{ const s=await navigator.mediaDevices.getUserMedia({audio:true}); vc=[]; vr=new MediaRecorder(s); vr.ondataavailable=e=>vc.push(e.data); vr.start(); vbtn.classList.add('active'); Toast.info('🎤 Recording… release to send'); }catch{Toast.error('Mic denied');} });
   vbtn.addEventListener('mouseup',stopV); vbtn.addEventListener('mouseleave',stopV);
+
+  // ── Long-press Context Menu for Chat Messages ──
+  initChatContextMenu(uid);
+}
+
+// ── Chat Context Menu ────────────────────────────────────────
+function initChatContextMenu(localUid){
+  let _pressTimer=null, _ctxMenu=null;
+  const msgsEl=$('chat-messages');
+  const CTX_REACTIONS=['👍','❤️','😂','😮','😢','🔥'];
+
+  function closeChatCtx(){ if(_ctxMenu){_ctxMenu.remove();_ctxMenu=null;} }
+
+  function openChatCtx(msgEl,x,y){
+    closeChatCtx();
+    const msgId=msgEl.dataset.id;
+    const senderId=msgEl.dataset.senderId;
+    const isOwn=senderId===localUid;
+    const msgType=msgEl.dataset.type;
+    const m=chat?.getMsg(msgId);
+
+    _ctxMenu=document.createElement('div');
+    _ctxMenu.className='chat-ctx-menu';
+
+    // Quick reactions row
+    let html='<div class="chat-ctx-reactions">';
+    CTX_REACTIONS.forEach(e=>{ html+=`<button data-action="react" data-emoji="${e}">${e}</button>`; });
+    html+='</div>';
+
+    // Actions
+    html+=`<button class="ctx-item" data-action="reply"><span class="ctx-icon">↩️</span> Reply</button>`;
+    html+=`<button class="ctx-item" data-action="copy"><span class="ctx-icon">📋</span> Copy</button>`;
+    if(isOwn && msgType==='text') html+=`<button class="ctx-item" data-action="edit"><span class="ctx-icon">✏️</span> Edit</button>`;
+    if(isOwn) html+=`<div class="ctx-sep"></div><button class="ctx-item danger" data-action="delete"><span class="ctx-icon">🗑️</span> Delete</button>`;
+
+    _ctxMenu.innerHTML=html;
+
+    // Position — keep within viewport
+    document.body.appendChild(_ctxMenu);
+    const rect=_ctxMenu.getBoundingClientRect();
+    let posX=Math.min(x,window.innerWidth-rect.width-12);
+    let posY=Math.min(y,window.innerHeight-rect.height-12);
+    posX=Math.max(8,posX); posY=Math.max(8,posY);
+    _ctxMenu.style.left=posX+'px'; _ctxMenu.style.top=posY+'px';
+
+    // Handlers
+    _ctxMenu.querySelectorAll('[data-action]').forEach(btn=>{
+      btn.addEventListener('click',e=>{
+        e.stopPropagation();
+        const action=btn.dataset.action;
+        switch(action){
+          case 'react':{
+            const emoji=btn.dataset.emoji;
+            chat?.addReaction(msgId,emoji);
+            webrtc?.broadcast({type:'chat-reaction',id:msgId,emoji});
+            break;
+          }
+          case 'copy':{
+            const text=m?.text || m?.fileName || '';
+            copyText(text).then(()=>Toast.success('Copied!'));
+            break;
+          }
+          case 'reply':{
+            const inp=$('chat-input');
+            const replyName=m?.senderName||'Unknown';
+            const snippet=(m?.text||m?.fileName||'').slice(0,40);
+            inp.value=`> ${replyName}: ${snippet}\n`;
+            inp.focus();
+            inp.setSelectionRange(inp.value.length,inp.value.length);
+            break;
+          }
+          case 'edit':{
+            _editingMsgId=msgId;
+            const inp=$('chat-input');
+            inp.value=m?.text||'';
+            inp.placeholder='Editing message… (Esc to cancel)';
+            inp.focus();
+            msgEl.classList.add('editing');
+            break;
+          }
+          case 'delete':{
+            chat?.deleteMsg(msgId);
+            webrtc?.broadcast({type:'chat-delete',id:msgId});
+            Toast.info('Message deleted');
+            break;
+          }
+        }
+        closeChatCtx();
+      });
+    });
+  }
+
+  // Tap / Long press (mobile)
+  let _touchMoved=false, _touchHandled=false;
+  msgsEl.addEventListener('touchstart',e=>{
+    const msgEl=e.target.closest('.chat-msg');
+    if(!msgEl)return;
+    // Skip if tapped on a link, button, image, audio, or download
+    if(e.target.closest('a,button,audio,img'))return;
+    _touchMoved=false; _touchHandled=false;
+    _pressTimer=setTimeout(()=>{
+      _touchHandled=true;
+      const touch=e.touches[0];
+      openChatCtx(msgEl,touch.clientX,touch.clientY);
+      if(navigator.vibrate)navigator.vibrate(30);
+    },500);
+  },{passive:true});
+  msgsEl.addEventListener('touchmove',()=>{_touchMoved=true;clearTimeout(_pressTimer);},{passive:true});
+  msgsEl.addEventListener('touchend',e=>{
+    clearTimeout(_pressTimer);
+    if(_touchMoved||_touchHandled)return;
+    // Single tap — also show the menu
+    const msgEl=e.target.closest('.chat-msg');
+    if(!msgEl)return;
+    if(e.target.closest('a,button,audio,img'))return;
+    const touch=e.changedTouches[0];
+    if(touch) openChatCtx(msgEl,touch.clientX,touch.clientY);
+  },{passive:true});
+
+  // Right-click (desktop)
+  msgsEl.addEventListener('contextmenu',e=>{
+    const msgEl=e.target.closest('.chat-msg');
+    if(!msgEl)return;
+    e.preventDefault();
+    openChatCtx(msgEl,e.clientX,e.clientY);
+  });
+
+  // Left-click on message (desktop) — also show context menu
+  msgsEl.addEventListener('click',e=>{
+    const msgEl=e.target.closest('.chat-msg');
+    if(!msgEl)return;
+    // Don't open menu if clicking links, buttons, audio controls, images, or downloads
+    if(e.target.closest('a,button,audio,img,.msg-reaction-pill'))return;
+    e.stopPropagation();
+    openChatCtx(msgEl,e.clientX,e.clientY);
+  });
+
+  // Close on outside click/touch
+  document.addEventListener('click',e=>{ if(_ctxMenu&&!_ctxMenu.contains(e.target)&&!e.target.closest('.chat-msg'))closeChatCtx(); });
+  document.addEventListener('touchstart',e=>{ if(_ctxMenu&&!_ctxMenu.contains(e.target))closeChatCtx(); },{passive:true});
 }
 
 // ── Settings ─────────────────────────────────────────────────
@@ -1392,6 +1612,9 @@ function initSettings(){
   $('settings-overlay').addEventListener('click',e=>{if(e.target===$('settings-overlay'))$('settings-overlay').classList.add('hidden');});
   $('sel-mic').onchange=e=>webrtc.changeDevice('audioinput',e.target.value);
   $('sel-cam').onchange=e=>webrtc.changeDevice('videoinput',e.target.value);
+  // Wire noise suppression and echo cancellation toggles
+  $('noise-sup').onchange=()=>{ webrtc?.applyAudioConstraints({ noiseSuppression:$('noise-sup').checked, echoCancellation:$('echo-cancel').checked }); Toast.info($('noise-sup').checked?'Noise suppression ON':'Noise suppression OFF'); };
+  $('echo-cancel').onchange=()=>{ webrtc?.applyAudioConstraints({ noiseSuppression:$('noise-sup').checked, echoCancellation:$('echo-cancel').checked }); Toast.info($('echo-cancel').checked?'Echo cancellation ON':'Echo cancellation OFF'); };
 }
 async function loadDevices(){ try{ const devs=await navigator.mediaDevices.enumerateDevices(); const mic=$('sel-mic'),cam=$('sel-cam'); if(mic)mic.innerHTML=devs.filter(d=>d.kind==='audioinput').map(d=>`<option value="${d.deviceId}">${d.label||'Microphone'}</option>`).join(''); if(cam)cam.innerHTML=devs.filter(d=>d.kind==='videoinput').map(d=>`<option value="${d.deviceId}">${d.label||'Camera'}</option>`).join(''); }catch{Toast.error('Cannot list devices.');} }
 
