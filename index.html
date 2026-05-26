@@ -1029,15 +1029,76 @@ class WebRTCManager {
   get hostId(){ return `em-${this.roomId.toLowerCase()}`; }
   get myId(){ return this.isHost?this.hostId:`em-u-${this.userId}`; }
 
-  async initMedia(){
-    try{
-      this.localStream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},facingMode:'user'},audio:{echoCancellation:true,noiseSuppression:true}});
-    }catch(e){
-      try{ Toast.warning('No camera — audio only.'); this.localStream=await navigator.mediaDevices.getUserMedia({audio:true}); }
-      catch(e2){ Toast.error('Cannot access mic: '+e2.message); }
+ async initMedia(){
+
+  try{
+
+    this.localStream =
+      await navigator.mediaDevices.getUserMedia({
+
+        video:{
+          width:{ideal:1280},
+          height:{ideal:720},
+          facingMode:'user'
+        },
+
+        audio:{
+          echoCancellation:true,
+          noiseSuppression:true,
+          autoGainControl:true,
+          sampleRate:48000,
+          channelCount:1
+        }
+
+      });
+
+    // Extra audio enhancement
+    const audioTrack =
+      this.localStream.getAudioTracks()[0];
+
+    if(audioTrack){
+
+      await audioTrack.applyConstraints({
+
+        echoCancellation:true,
+        noiseSuppression:true,
+        autoGainControl:true
+
+      });
+
     }
-    return this.localStream;
+
+  }catch(e){
+
+    try{
+
+      Toast.warning('No camera — audio only.');
+
+      this.localStream =
+        await navigator.mediaDevices.getUserMedia({
+
+          audio:{
+            echoCancellation:true,
+            noiseSuppression:true,
+            autoGainControl:true,
+            sampleRate:48000,
+            channelCount:1
+          }
+
+        });
+
+    }catch(e2){
+
+      Toast.error(
+        'Cannot access mic: ' + e2.message
+      );
+
+    }
+
   }
+
+  return this.localStream;
+}
 
   async init(){
     return new Promise((res,rej)=>{
