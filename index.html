@@ -116,6 +116,19 @@ a{text-decoration:none;color:inherit}
 #pwa-install-btn:hover{transform:translateY(-2px)}
 .nav-cta{padding:8px 18px;border-radius:10px;font-size:0.88rem;font-weight:600;background:var(--grad);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,0.3);transition:all 0.3s}
 .nav-cta:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(99,102,241,0.5)}
+
+/* ===== NEW: Download button (desktop only) ===== */
+.nav-download-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 18px;border-radius:10px;font-size:0.88rem;font-weight:600;
+  background:var(--glass2);border:1px solid var(--border);color:var(--txt);
+  transition:all 0.3s;cursor:pointer;font-family:inherit;
+}
+.nav-download-btn:hover{background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.5);transform:translateY(-2px)}
+
+/* Hide download button on mobile — it lives in the hamburger menu instead */
+@media(max-width:767px){.nav-download-btn{display:none!important}}
+
 /* Theme toggle button */
 .theme-toggle-btn{width:38px;height:38px;border-radius:50%;background:var(--glass2);border:1px solid var(--border);color:var(--txt);font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all 0.3s;cursor:pointer;flex-shrink:0}
 .theme-toggle-btn:hover{background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);transform:rotate(20deg)}
@@ -142,6 +155,54 @@ a{text-decoration:none;color:inherit}
 @media(max-width:899px){.flip-cam-btn{display:flex!important}}
 /* Speaker toggle button */
 .speaker-btn.active{background:rgba(34,211,238,0.2);border-color:var(--cyan);color:var(--cyan)}
+/* GIF Picker */
+#gif-picker-panel{display:none;position:absolute;bottom:100%;left:0;right:0;background:var(--card-bg);border:1px solid var(--border);border-radius:14px 14px 0 0;padding:10px;max-height:260px;overflow:hidden;z-index:102;flex-direction:column;gap:8px}
+#gif-picker-panel.show{display:flex}
+#gif-search-input{padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:var(--input-bg);color:var(--txt);font-size:0.85rem;width:100%;font-family:inherit}
+#gif-search-input::placeholder{color:var(--txt2)}
+#gif-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;overflow-y:auto;flex:1}
+#gif-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:7px;cursor:pointer;transition:transform 0.15s;border:1px solid var(--border)}
+#gif-grid img:hover{transform:scale(1.04)}
+#gif-loading{text-align:center;color:var(--txt2);font-size:0.82rem;padding:16px}
+/* Mobile GIF */
+#m-gif-picker-panel{display:none;position:absolute;bottom:100%;left:0;right:0;background:var(--card-bg);border:1px solid var(--border);border-radius:14px 14px 0 0;padding:10px;max-height:240px;overflow:hidden;z-index:102;flex-direction:column;gap:8px}
+#m-gif-picker-panel.show{display:flex}
+#m-gif-search-input{padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:var(--input-bg);color:var(--txt);font-size:0.85rem;width:100%;font-family:inherit}
+#m-gif-search-input::placeholder{color:var(--txt2)}
+#m-gif-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;overflow-y:auto;flex:1}
+#m-gif-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:7px;cursor:pointer;transition:transform 0.15s;border:1px solid var(--border)}
+#m-gif-grid img:hover{transform:scale(1.04)}
+/* Host controls in participant list */
+.p-host-actions{display:flex;gap:5px;margin-left:auto;flex-shrink:0}
+.p-action-btn{padding:4px 9px;border-radius:7px;font-size:0.72rem;font-weight:600;border:1px solid var(--border);background:var(--glass2);color:var(--txt2);transition:all 0.15s;cursor:pointer}
+.p-action-btn:hover{color:var(--txt)}
+.p-action-btn.kick{border-color:rgba(239,68,68,0.3);color:var(--red)}
+.p-action-btn.kick:hover{background:rgba(239,68,68,0.15)}
+.p-action-btn.mute-p{border-color:rgba(99,102,241,0.3);color:var(--primary2)}
+.p-action-btn.mute-p:hover{background:rgba(99,102,241,0.15)}
+/* Download App Modal */
+#download-modal{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px}
+#download-modal.hidden{display:none!important}
+.dl-box{background:var(--card-bg);border:1px solid var(--border);border-radius:24px;padding:32px;max-width:420px;width:100%;position:relative;animation:fadeInScale 0.3s ease}
+.dl-title{font-size:1.35rem;font-weight:800;margin-bottom:6px}
+.dl-sub{color:var(--txt2);font-size:0.88rem;margin-bottom:24px}
+.dl-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:var(--glass2);border:1px solid var(--border);color:var(--txt2);font-size:1rem;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s}
+.dl-close:hover{background:rgba(239,68,68,0.1);color:var(--red);border-color:rgba(239,68,68,0.3)}
+.dl-options{display:flex;flex-direction:column;gap:12px}
+.dl-option{display:flex;align-items:center;gap:14px;padding:16px;border-radius:14px;border:1px solid var(--border);background:var(--glass);cursor:pointer;transition:all 0.2s;text-decoration:none;color:var(--txt)}
+.dl-option:hover{border-color:rgba(99,102,241,0.4);background:rgba(99,102,241,0.08);transform:translateX(4px)}
+.dl-option-icon{font-size:1.8rem;width:48px;height:48px;border-radius:12px;background:rgba(99,102,241,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dl-option-info .dl-opt-title{font-weight:700;font-size:0.95rem}
+.dl-option-info .dl-opt-sub{font-size:0.78rem;color:var(--txt2);margin-top:2px}
+.dl-pwa-section{margin-top:16px;padding:14px;border-radius:12px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2)}
+.dl-pwa-title{font-size:0.82rem;font-weight:600;color:var(--primary2);margin-bottom:8px}
+.dl-pwa-steps{font-size:0.78rem;color:var(--txt2);line-height:1.8;padding-left:14px}
+/* Kick notification */
+#kick-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff}
+#kick-overlay.show{display:flex}
+.kick-icon{font-size:4rem}
+.kick-msg{font-size:1.4rem;font-weight:700}
+.kick-sub{font-size:0.9rem;color:rgba(255,255,255,0.6)}
 .hamburger{display:none;flex-direction:column;gap:5px;background:none;padding:8px}
 .hamburger span{display:block;width:22px;height:2px;background:var(--txt);border-radius:2px;transition:all 0.3s}
 .mobile-nav{display:none;position:fixed;top:64px;left:0;right:0;z-index:199;background:rgba(10,10,15,0.98);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:16px;flex-direction:column;gap:6px;animation:slideDown 0.3s ease}
@@ -422,7 +483,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:56px 20p
 .ctx-item.danger:hover{background:rgba(239,68,68,0.14)}
 .ctx-sep{height:1px;background:var(--border);margin:4px 0}
 
-/* Reaction Picker on messages — more emojis */
+/* Reaction Picker on messages */
 #msg-react-picker{
   position:fixed;z-index:3001;
   background:var(--card-bg);border:1px solid var(--border);border-radius:16px;
@@ -597,6 +658,10 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:56px 20p
   .call-duration{font-size:0.75rem;padding:4px 8px}
 }
 @media(max-width:899px){.features-grid{grid-template-columns:1fr 1fr}.footer-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:767px){
+  /* Download button hidden on mobile — shown in hamburger menu */
+  .nav-download-btn{display:none!important}
+}
 @media(max-width:699px){
   #navbar{padding:0 14px;height:58px}
   .nav-links{display:none}
@@ -741,6 +806,48 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:56px 20p
   </div>
 </div>
 
+<!-- DOWNLOAD APP MODAL -->
+<div id="download-modal" class="hidden">
+  <div class="dl-box">
+    <button class="dl-close" onclick="closeDownloadModal()">✕</button>
+    <div class="dl-title">📲 Get EchoMeet</div>
+    <div class="dl-sub">Install on any device — no app store required</div>
+    <div class="dl-options">
+      <div class="dl-option" id="dl-pwa-btn" onclick="triggerPwaInstall()">
+        <div class="dl-option-icon">🌐</div>
+        <div class="dl-option-info"><div class="dl-opt-title">Install as Web App (PWA)</div><div class="dl-opt-sub">Works on Android, iOS, Windows, Mac &amp; Linux</div></div>
+      </div>
+      <a class="dl-option" href="https://play.google.com/store" target="_blank" rel="noopener">
+        <div class="dl-option-icon">🤖</div>
+        <div class="dl-option-info"><div class="dl-opt-title">Android (Google Play)</div><div class="dl-opt-sub">Coming soon · Use PWA for now</div></div>
+      </a>
+      <a class="dl-option" href="https://apps.apple.com" target="_blank" rel="noopener">
+        <div class="dl-option-icon">🍎</div>
+        <div class="dl-option-info"><div class="dl-opt-title">iOS (App Store)</div><div class="dl-opt-sub">Coming soon · Use Safari PWA install</div></div>
+      </a>
+      <a class="dl-option" href="https://github.com" target="_blank" rel="noopener">
+        <div class="dl-option-icon">🖥️</div>
+        <div class="dl-option-info"><div class="dl-opt-title">Desktop (Windows / Mac / Linux)</div><div class="dl-opt-sub">Download from GitHub Releases</div></div>
+      </a>
+    </div>
+    <div class="dl-pwa-section">
+      <div class="dl-pwa-title">📱 How to install on iOS (Safari)</div>
+      <ol class="dl-pwa-steps">
+        <li>Open EchoMeet in Safari</li>
+        <li>Tap the Share button (□↑)</li>
+        <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+        <li>Tap <strong>Add</strong> — done! 🎉</li>
+      </ol>
+    </div>
+  </div>
+</div>
+<!-- KICK OVERLAY -->
+<div id="kick-overlay">
+  <div class="kick-icon">🚫</div>
+  <div class="kick-msg">You've been removed</div>
+  <div class="kick-sub">The host has removed you from this room.</div>
+</div>
+
 <!-- ===== LANDING PAGE ===== -->
 <div id="landing-page">
   <nav id="navbar">
@@ -753,21 +860,28 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:56px 20p
       <a href="#room-section">Get Started</a>
       <a href="#dev-section">Developer</a>
     </div>
+    <!-- Desktop nav actions: Logo | [nav-links] | theme-toggle | Start Call | Download -->
     <div class="nav-actions">
       <button id="pwa-install-btn">📲 Install</button>
       <button id="nav-theme-toggle" class="theme-toggle-btn" onclick="quickToggleTheme()" title="Toggle dark/light mode">🌙</button>
       <button class="nav-cta" onclick="document.getElementById('room-section').scrollIntoView({behavior:'smooth'})">Start Call</button>
+      <!-- Hidden on mobile (≤767px) — available in hamburger menu instead -->
+      <button class="nav-download-btn" onclick="openDownloadModal()">⬇️ Download</button>
     </div>
     <button class="hamburger" id="hamburger-btn" onclick="toggleMobileNav()">
       <span></span><span></span><span></span>
     </button>
   </nav>
+
+  <!-- Mobile menu: Features | Get Started | Developer | Start a Call | Download App -->
   <div class="mobile-nav" id="mobile-nav">
     <a href="#features-section" onclick="closeMobileNav()">✨ Features</a>
     <a href="#room-section" onclick="closeMobileNav()">🚀 Get Started</a>
     <a href="#dev-section" onclick="closeMobileNav()">👨‍💻 Developer</a>
     <a href="#room-section" onclick="closeMobileNav()">📞 Start a Call</a>
+    <a href="#" onclick="closeMobileNav();openDownloadModal();return false;" style="background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.3);color:var(--primary2);display:flex;align-items:center;gap:8px">⬇️ Download App</a>
   </div>
+
   <section id="hero">
     <canvas id="particle-canvas"></canvas>
     <div class="blob blob1"></div><div class="blob blob2"></div><div class="blob blob3"></div>
@@ -951,8 +1065,13 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:56px 20p
         </div>
         <div id="chat-input-area">
           <div id="emoji-picker"><div class="emoji-grid" id="emoji-grid"></div></div>
+          <div id="gif-picker-panel">
+            <input id="gif-search-input" type="text" placeholder="Search GIFs... (powered by Tenor)" autocomplete="off"/>
+            <div id="gif-grid"><div id="gif-loading">🔍 Type to search GIFs</div></div>
+          </div>
           <div class="chat-toolbar">
             <button class="toolbar-btn" onclick="toggleEmojiPicker()">😊</button>
+            <button class="toolbar-btn" onclick="toggleGifPicker()">GIF</button>
             <button class="toolbar-btn" onclick="document.getElementById('file-input').click()">📎</button>
             <button class="toolbar-btn" id="voice-btn-desk" onmousedown="Chat.startVoice()" onmouseup="Chat.stopVoice()" ontouchstart="Chat.startVoice(event)" ontouchend="Chat.stopVoice()">🎤</button>
           </div>
@@ -1009,8 +1128,13 @@ footer{background:var(--bg2);border-top:1px solid var(--border);padding:56px 20p
         <div id="mobile-emoji-picker" style="display:none;position:absolute;bottom:100%;left:0;right:0;background:var(--card-bg);border:1px solid var(--border);border-radius:14px 14px 0 0;padding:10px;max-height:200px;overflow-y:auto;z-index:100">
           <div class="emoji-grid" id="mobile-emoji-grid"></div>
         </div>
+        <div id="m-gif-picker-panel">
+          <input id="m-gif-search-input" type="text" placeholder="Search GIFs..." autocomplete="off"/>
+          <div id="m-gif-grid"><div id="m-gif-loading" style="text-align:center;color:var(--txt2);font-size:0.82rem;padding:12px">🔍 Type to search GIFs</div></div>
+        </div>
         <div style="display:flex;gap:5px;margin-bottom:7px">
           <button class="toolbar-btn" onclick="toggleMobileEmojiPicker()">😊</button>
+          <button class="toolbar-btn" onclick="toggleMobileGifPicker()">GIF</button>
           <button class="toolbar-btn" onclick="document.getElementById('m-file-input').click()">📎</button>
           <button class="toolbar-btn" onmousedown="Chat.startVoice()" onmouseup="Chat.stopVoice()" ontouchstart="Chat.startVoice(event)" ontouchend="Chat.stopVoice()">🎤</button>
         </div>
@@ -1158,6 +1282,69 @@ function copyRoomCode(){
 function toggleMobileNav(){document.getElementById('mobile-nav')?.classList.toggle('open');}
 function closeMobileNav(){document.getElementById('mobile-nav')?.classList.remove('open');}
 
+/* Download Modal */
+function openDownloadModal(){document.getElementById('download-modal')?.classList.remove('hidden');}
+function closeDownloadModal(){document.getElementById('download-modal')?.classList.add('hidden');}
+function triggerPwaInstall(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(r=>{deferredPrompt=null;if(r.outcome==='accepted')Toast.success('EchoMeet installed!');document.getElementById('pwa-install-btn')?.classList.remove('visible');});}else{Toast.info('📱 Use browser menu → "Add to Home Screen" or "Install app"');}}
+document.getElementById('download-modal')?.addEventListener('click',function(e){if(e.target===this)closeDownloadModal();});
+
+/* GIF Picker (Tenor API - free, no key needed via proxy) */
+let gifSearchTimer=null;
+async function fetchGifs(query='trending',mobile=false){
+  const gridId=mobile?'m-gif-grid':'gif-grid';
+  const loadId=mobile?'m-gif-loading':'gif-loading';
+  const grid=document.getElementById(gridId);if(!grid)return;
+  grid.innerHTML=`<div id="${loadId}" style="text-align:center;color:var(--txt2);font-size:0.82rem;padding:16px;grid-column:1/-1">⏳ Loading GIFs...</div>`;
+  try{
+    const key='AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCjQ';
+    const endpoint=query==='trending'
+      ?`https://tenor.googleapis.com/v2/featured?key=${key}&limit=12&media_filter=gif`
+      :`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(query)}&key=${key}&limit=12&media_filter=gif`;
+    const res=await fetch(endpoint);
+    if(!res.ok)throw new Error('fetch failed');
+    const data=await res.json();
+    grid.innerHTML='';
+    (data.results||[]).forEach(item=>{
+      const url=item.media_formats?.gif?.url||item.media_formats?.tinygif?.url;
+      if(!url)return;
+      const img=document.createElement('img');img.src=url;img.alt='GIF';img.loading='lazy';
+      img.onclick=()=>sendGifMessage(url,mobile);
+      grid.appendChild(img);
+    });
+    if(!grid.children.length)grid.innerHTML=`<div style="text-align:center;color:var(--txt2);font-size:0.82rem;padding:16px;grid-column:1/-1">No GIFs found</div>`;
+  }catch(e){
+    grid.innerHTML=`<div style="text-align:center;color:var(--txt2);font-size:0.82rem;padding:16px;grid-column:1/-1">⚠️ GIF service unavailable</div>`;
+  }
+}
+function sendGifMessage(url,mobile=false){
+  const msg={id:`${Date.now()}_gif`,type:'gif',data:url,name:State.localName,avatar:State.localAvatar,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),own:true};
+  Chat.messages.push(msg);Chat.renderMessage(msg);WebRTCManager.sendData('chat-message',msg);Chat.scrollToBottom();
+  if(mobile){const p=document.getElementById('m-gif-picker-panel');if(p)p.classList.remove('show');}
+  else{const p=document.getElementById('gif-picker-panel');if(p)p.classList.remove('show');}
+}
+function toggleGifPicker(){
+  const panel=document.getElementById('gif-picker-panel');if(!panel)return;
+  const show=!panel.classList.contains('show');
+  panel.classList.toggle('show',show);
+  document.getElementById('emoji-picker')?.classList.remove('show');
+  if(show&&!document.getElementById('gif-grid')?.children.length)fetchGifs('trending',false);
+}
+function toggleMobileGifPicker(){
+  const panel=document.getElementById('m-gif-picker-panel');if(!panel)return;
+  const show=!panel.classList.contains('show');
+  panel.classList.toggle('show',show);
+  document.getElementById('mobile-emoji-picker').style.display='none';
+  if(show&&!document.getElementById('m-gif-grid')?.querySelector('img'))fetchGifs('trending',true);
+}
+document.getElementById('gif-search-input')?.addEventListener('input',function(){
+  clearTimeout(gifSearchTimer);const q=this.value.trim();
+  gifSearchTimer=setTimeout(()=>fetchGifs(q||'trending',false),400);
+});
+document.getElementById('m-gif-search-input')?.addEventListener('input',function(){
+  clearTimeout(gifSearchTimer);const q=this.value.trim();
+  gifSearchTimer=setTimeout(()=>fetchGifs(q||'trending',true),400);
+});
+
 /* ============================================================
    FLOW
    ============================================================ */
@@ -1255,7 +1442,6 @@ const Settings={
         ss.innerHTML='';
         if(outs.length){outs.forEach((d,i)=>{const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||`Speaker ${i+1}`;ss.appendChild(o);});}
         else{const o=document.createElement('option');o.textContent='System Default';ss.appendChild(o);}
-        // Check setSinkId support
         const testVid=document.querySelector('video');
         if(!testVid||!testVid.setSinkId){
           if(ss)ss.disabled=true;
@@ -1278,11 +1464,9 @@ const Settings={
   toggleSpeakerphone(){
     this.speakerphoneOn=!this.speakerphoneOn;
     document.getElementById('speakerphone-toggle')?.classList.toggle('on',this.speakerphoneOn);
-    // Try setSinkId on all videos to default (speakerphone = empty string = system default)
     document.querySelectorAll('video,audio').forEach(async el=>{
       if(el.setSinkId){try{await el.setSinkId('');}catch(e){}}
     });
-    // On iOS/mobile: use AudioContext trick to force speaker
     try{
       const ac=new(window.AudioContext||window.webkitAudioContext)();
       const osc=ac.createOscillator();osc.connect(ac.destination);osc.start();osc.stop(0.001);
@@ -1299,7 +1483,6 @@ function quickToggleTheme(){
   localStorage.setItem('em_theme',next);
   const btn=document.getElementById('nav-theme-toggle');
   if(btn)btn.textContent=next==='light'?'☀️':'🌙';
-  // Update chip in settings
   document.querySelectorAll('.theme-chip').forEach(c=>c.classList.remove('active'));
   document.querySelector(`[data-theme-val="${next}"]`)?.classList.add('active');
   Toast.info(next==='light'?'☀️ Light mode':'🌙 Dark mode');
@@ -1313,7 +1496,6 @@ function quickToggleTheme(){
     if(chip){document.querySelectorAll('.theme-chip').forEach(c=>c.classList.remove('active'));chip.classList.add('active');}
     const btn=document.getElementById('nav-theme-toggle');if(btn)btn.textContent=t==='light'?'☀️':'🌙';
   }
-  // Show file:// warning
   if(location.protocol==='file:')document.getElementById('file-warning')?.classList.add('show');
 })();
 document.getElementById('settings-modal')?.addEventListener('click',function(e){if(e.target===this)Settings.close();});
@@ -1342,7 +1524,6 @@ const Chat={
     this.scrollToBottom();
   },
 
-  /* ---- SEND OR EDIT ---- */
   sendOrEdit(mobile=false){
     if(this.editingId){this._submitEdit(mobile);return;}
     this.sendText(mobile);
@@ -1367,7 +1548,6 @@ const Chat={
     const ta=document.getElementById(mobile?'mobile-chat-textarea':'chat-textarea');if(!ta)return;
     const text=ta.value.trim();if(!text){Toast.warning('Message cannot be empty');return;}
     ta.value='';ta.style.height='auto';ta.classList.remove('editing-mode');
-    // Update all rendered instances
     if(this.editingWraps){
       this.editingWraps.forEach(wrap=>{
         const textEl=wrap.querySelector('.msg-text');if(textEl)textEl.textContent=text;
@@ -1375,10 +1555,8 @@ const Chat={
         if(!editTag){editTag=document.createElement('span');editTag.className='msg-edited-tag';editTag.textContent='(edited)';wrap.querySelector('.msg-bubble')?.appendChild(editTag);}
       });
     }
-    // Update in messages array
     const msgObj=this.messages.find(m=>m.id===this.editingId);
     if(msgObj){msgObj.text=text;msgObj.edited=true;}
-    // Broadcast edit to peers
     WebRTCManager.sendData('edit-message',{id:this.editingId,text});
     this.cancelEdit();
     Toast.success('Message edited');
@@ -1434,14 +1612,12 @@ const Chat={
       if(msg.own){const t=document.createElement('div');t.className='msg-time';t.textContent=msg.time;bubble.appendChild(t);}
       const rxns=document.createElement('div');rxns.className='msg-reactions-row';bubble.appendChild(rxns);
 
-      // Quick reaction buttons (visible on hover/touch)
       const qr=document.createElement('div');qr.className='msg-quick-react';
       ['❤️','👍','😂','😮','🔥'].forEach(em=>{
         const b=document.createElement('button');b.className='mqr-btn';b.textContent=em;b.title=em;
         b.onclick=(e)=>{e.stopPropagation();Chat.addReaction(msg.id,em,true);WebRTCManager.sendData('react-message',{msgId:msg.id,emoji:em});showFloatingReaction(em);};
         qr.appendChild(b);
       });
-      // More reactions button
       const moreBtn=document.createElement('button');moreBtn.className='mqr-btn';moreBtn.textContent='＋';moreBtn.title='More reactions';
       moreBtn.onclick=(e)=>{e.stopPropagation();showMsgReactPopup(e,msg.id);};
       qr.appendChild(moreBtn);
@@ -1449,7 +1625,6 @@ const Chat={
 
       wrap.appendChild(av);wrap.appendChild(bubble);container.appendChild(wrap);
 
-      // Context menu (right-click / long press)
       let lpT;
       wrap.addEventListener('contextmenu',e=>{e.preventDefault();showCtxMenu(e.clientX,e.clientY,msg);});
       wrap.addEventListener('touchstart',()=>{lpT=setTimeout(()=>showCtxMenu(window.innerWidth/2,window.innerHeight*.4,msg),500);},{passive:true});
@@ -1523,7 +1698,6 @@ document.getElementById('ctx-menu')?.addEventListener('click',e=>{
   if(action==='reply')Chat.setReply(msg);
   else if(action==='copy'){const fallback=()=>{try{const t=document.createElement('textarea');t.value=msg.text||'';document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);}catch(e){}};navigator.clipboard?.writeText(msg.text||'').then(()=>Toast.success('Copied!')).catch(fallback)||fallback();}
   else if(action==='react'){
-    // Use the new large popup
     const popup=document.getElementById('msg-react-popup');popup.classList.remove('hidden');
     popup.dataset.msgId=msg.id;
     const mw=280,mh=160;
@@ -1543,7 +1717,6 @@ document.addEventListener('click',e=>{
   if(!e.target.closest('#ctx-menu'))document.getElementById('ctx-menu')?.classList.add('hidden');
   if(!e.target.closest('#msg-react-popup')&&!e.target.closest('.mqr-btn[title="More reactions"]'))document.getElementById('msg-react-popup')?.classList.add('hidden');
 });
-// Large popup reaction handler
 function showMsgReactPopup(e,msgId){
   const popup=document.getElementById('msg-react-popup');popup.classList.remove('hidden');
   popup.dataset.msgId=msgId;
@@ -1633,28 +1806,19 @@ const VideoGrid={
 };
 
 /* ============================================================
-   WEBRTC — Fixed connection logic
-   
-   Strategy:
-   - Host registers peer ID = "echomeet" + roomCode (lowercase, no special chars)
-   - Joiner creates peer with random ID
-   - Joiner connects data + calls host
-   - Host answers all incoming calls and data connections
-   - Host sends peer-list to new joiners for mesh
-   - Peers also accept calls from any other peer (for mesh)
+   WEBRTC
    ============================================================ */
 const WebRTCManager={
   peer:null,localStream:null,screenStream:null,
   connections:{},calls:{},
-  dataChannels:{}, // RTCDataChannels from media peer connection
-  broadcastChannel:null, // BroadcastChannel for same-device tabs
-  _seenIds:new Set(), // deduplication
+  dataChannels:{},
+  broadcastChannel:null,
+  _seenIds:new Set(),
   audioCtx:null,analyser:null,
   mediaRecorder:null,recordChunks:[],
 
   async init(){
     Toast.info('🎙️ Accessing camera & microphone…');
-    // Get media
     const mediaConstraints=[
       {audio:{echoCancellation:{ideal:true},noiseSuppression:{ideal:true},autoGainControl:{ideal:true},sampleRate:{ideal:48000},sampleSize:{ideal:16},channelCount:{ideal:1},latency:{ideal:0.01}},video:{width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30}}},
       {audio:true,video:true},
@@ -1667,19 +1831,17 @@ const WebRTCManager={
     VideoGrid.setMuted('local',State.isMuted);
     this._initSpeakingDetection();
 
-    // BroadcastChannel: instant messaging for same-device tabs (same room)
     try{
       this.broadcastChannel=new BroadcastChannel('em-'+State.roomId);
       this.broadcastChannel.onmessage=(e)=>{
         const d=e.data;
-        if(!d||d._src===State.localPeerId)return; // ignore own messages
-        if(d._mid&&this._seenIds.has(d._mid))return; // deduplicate
+        if(!d||d._src===State.localPeerId)return;
+        if(d._mid&&this._seenIds.has(d._mid))return;
         if(d._mid)this._seenIds.add(d._mid);
         this._onData('__bc__',d);
       };
     }catch(e){}
 
-    // Peer ID: host uses predictable ID, guests use random
     const roomKey='echomeet'+State.roomId.toLowerCase().replace(/[^a-z0-9]/g,'');
     const myId=State.isHost?roomKey:undefined;
     this._createPeer(myId,roomKey);
@@ -1708,12 +1870,11 @@ const WebRTCManager={
     this.peer.on('error',err=>{
       console.warn('PeerJS error:',err.type,err);
       if(err.type==='unavailable-id'){
-        // Host ID taken → become a guest and join
         Toast.info('Room exists, joining as participant…');
         State.isHost=false;
         document.getElementById('info-role').textContent='Participant';
         this.peer.destroy();
-        this._createPeer(undefined,roomKey);// retry as guest
+        this._createPeer(undefined,roomKey);
       } else if(err.type==='peer-unavailable'){
         Toast.error(`Room "${State.roomId}" not found. Check the code and try again.`);
       } else {
@@ -1723,12 +1884,10 @@ const WebRTCManager={
     });
 
     this.peer.on('connection',conn=>{
-      // Someone connected to us
       this._handleConn(conn);
     });
 
     this.peer.on('call',call=>{
-      // Responder side — NOT the initiator
       call._isInitiator=false;
       call.answer(this.localStream);
       this._handleCallStream(call);
@@ -1743,10 +1902,8 @@ const WebRTCManager={
   },
 
   _connectToHost(hostId){
-    // Data connection to host (PeerJS fallback)
     const conn=this.peer.connect(hostId,{reliable:true,metadata:{name:State.localName,avatar:State.localAvatar}});
     this._handleConn(conn);
-    // Media call — mark as initiator so we create the RTCDataChannel
     const call=this.peer.call(hostId,this.localStream,{metadata:{name:State.localName,avatar:State.localAvatar}});
     if(call){
       call._isInitiator=true;
@@ -1772,10 +1929,8 @@ const WebRTCManager={
         const nm=conn.metadata?.name||'User',av=conn.metadata?.avatar||'😊';
         State.peers.set(peerId,{conn,name:nm,avatar:av,muted:false,camOff:false});
       }
-      // Send our info — use _cmd to avoid key conflict with payload
       conn.send({_cmd:'peer-info',name:State.localName,avatar:State.localAvatar,muted:State.isMuted,camOff:State.isCamOff});
 
-      // If host, send the current peer list for mesh networking
       if(State.isHost){
         const peerList=[];
         State.peers.forEach((pd,pid)=>{
@@ -1810,8 +1965,6 @@ const WebRTCManager={
       document.getElementById('quality-text').textContent='Connected';
       document.getElementById('quality-badge').className='quality-badge';
 
-      // Set up RTCDataChannel through the SAME peer connection as video
-      // This guarantees: if video works → data channel works
       this._setupRTCDC(call,peerId);
     });
     call.on('close',()=>this._removePeer(call.peer));
@@ -1823,11 +1976,10 @@ const WebRTCManager={
     if(!pc){console.warn('[EM] No peer connection for',peerId);return;}
 
     const initDC=(dc)=>{
-      if(this.dataChannels[peerId])return; // already have one
+      if(this.dataChannels[peerId])return;
       dc.onopen=()=>{
         this.dataChannels[peerId]=dc;
         console.log('[EM] RTCDataChannel OPEN with',peerId);
-        // Send peer info over the confirmed channel
         try{dc.send(JSON.stringify({_cmd:'peer-info',_src:State.localPeerId,name:State.localName,avatar:State.localAvatar,muted:State.isMuted,camOff:State.isCamOff}));}catch(e){}
         Toast.success('💬 Chat channel ready!');
         Chat.addSystem('Chat ready. Messages will now be delivered.');
@@ -1845,13 +1997,11 @@ const WebRTCManager={
       dc.onerror=(e)=>console.warn('[EM] RTCDataChannel error:',e);
     };
 
-    // Responder listens for data channel created by initiator
     pc.ondatachannel=(e)=>{
       console.log('[EM] Received RTCDataChannel from',peerId);
       initDC(e.channel);
     };
 
-    // Initiator creates the data channel
     if(call._isInitiator){
       try{
         console.log('[EM] Creating RTCDataChannel to',peerId);
@@ -1862,11 +2012,9 @@ const WebRTCManager={
   },
 
   _onData(peerId,data){
-    // Deduplicate messages (same message may arrive via multiple channels)
     const mid=data?._mid;
     if(mid){if(this._seenIds.has(mid))return;this._seenIds.add(mid);}
 
-    // Support both _cmd (new) and type (legacy) routing keys
     const cmd=data?._cmd||data?.type;
     if(!cmd)return;
     const peer=State.peers.get(peerId)||{name:'User',avatar:'😊'};
@@ -1905,20 +2053,16 @@ const WebRTCManager={
   },
 
   sendData(type,payload){
-    // Stamp each message with a unique ID for deduplication
     const mid=`${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
     const data={_cmd:type,_src:State.localPeerId,_mid:mid,...payload};
     const json=JSON.stringify(data);
 
-    // Channel 1: BroadcastChannel (same device/browser - instant, always works)
     try{if(this.broadcastChannel)this.broadcastChannel.postMessage(data);}catch(e){}
 
-    // Channel 2: RTCDataChannels (same peer connection as video - reliable)
     Object.values(this.dataChannels).forEach(dc=>{
       if(dc.readyState==='open'){try{dc.send(json);}catch(e){console.warn('[EM] DC send:',e);}}
     });
 
-    // Channel 3: PeerJS DataConnections (fallback)
     Object.values(this.connections).forEach(conn=>{
       if(!conn)return;
       if(conn.open){try{conn.send(data);}catch(e){}}
@@ -1930,7 +2074,6 @@ const WebRTCManager={
   },
 
   async switchCamera(){
-    // Toggle between front and back camera on mobile
     const tracks=this.localStream?.getVideoTracks();
     if(!tracks||!tracks.length){Toast.warning('No camera available');return;}
     const current=tracks[0].getSettings().facingMode||'user';
@@ -1938,10 +2081,8 @@ const WebRTCManager={
     try{
       const newStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:newFacing}},audio:false});
       const newTrack=newStream.getVideoTracks()[0];
-      // Replace in local stream
       tracks.forEach(t=>{this.localStream.removeTrack(t);t.stop();});
       this.localStream.addTrack(newTrack);
-      // Replace in all active peer connections
       Object.values(this.calls).forEach(call=>{
         try{const s=call.peerConnection?.getSenders().find(s=>s.track?.kind==='video');if(s)s.replaceTrack(newTrack);}catch(e){}
       });
@@ -1950,7 +2091,6 @@ const WebRTCManager={
       if(btn){btn.classList.add('active');setTimeout(()=>btn.classList.remove('active'),600);}
       Toast.success(newFacing==='user'?'🤳 Front camera':'📸 Back camera');
     }catch(e){
-      // Fallback: try without exact constraint
       try{
         const ns=await navigator.mediaDevices.getUserMedia({video:{facingMode:newFacing},audio:false});
         const nt=ns.getVideoTracks()[0];
@@ -2084,7 +2224,6 @@ const App={
     currentCode=genCode();const gc=document.getElementById('generated-code');if(gc)gc.textContent=currentCode;
     Chat.cancelEdit();Chat.cancelReply();
     Toast.info('👋 Call ended!');
-    // Restart particles
     setTimeout(()=>location.reload(),200);
   }
 };
